@@ -133,7 +133,9 @@ describe("GET /booking", () => {
       expect(response.body).toEqual({
         id: booking.id,
         Room: {
-          ...room
+          ...room,
+          createdAt: room.createdAt.toISOString(),
+          updatedAt: room.updatedAt.toISOString()
         }
       });
     });
@@ -308,7 +310,7 @@ describe("POST /booking", () => {
       const ticketType = await createTicketTypeWithHotel();
       await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
       const hotel = await createHotel();
-      const room = await createRoomWithHotelId(hotel.id);
+      const room = await createRoom(hotel.id);
       const userToFillBooking = await createUser();
 
       const nominalValue = faker.datatype.number({ min: 2, max: room.capacity - 3 });

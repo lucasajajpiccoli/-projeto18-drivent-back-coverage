@@ -37,12 +37,12 @@ async function isRoomFull(room: Room): Promise<boolean> {
 async function getBooking(userId: number): Promise<BookingWithRoom> {
   const allowed = await isUserAllowed(userId);
   if(!allowed) {
-    throw forbiddenError;
+    throw forbiddenError();
   }
 
   const bookingWithRoom = await bookingRepository.findWithRoomByUserId(userId);
   if(!bookingWithRoom) {
-    throw notFoundError;
+    throw notFoundError();
   }
 
   return bookingWithRoom;
@@ -50,27 +50,27 @@ async function getBooking(userId: number): Promise<BookingWithRoom> {
 
 async function createBooking(userId: number, roomId: number): Promise<BookingId> {
   if(roomId < 1) {
-    throw forbiddenError;
+    throw forbiddenError();
   }
   
   const allowed = await isUserAllowed(userId);
   if(!allowed) {
-    throw forbiddenError;
+    throw forbiddenError();
   }
 
   const bookingWithRoom = await bookingRepository.findWithRoomByUserId(userId);
   if(bookingWithRoom) {
-    throw forbiddenError;
+    throw forbiddenError();
   }
 
   const room = await roomRepository.findRoomById(roomId);
   if(!room) {
-    throw notFoundError;
+    throw notFoundError();
   }
 
   const full = await isRoomFull(room);
   if(full) {
-    forbiddenError;
+    throw forbiddenError();
   }
 
   const createdBooking = await bookingRepository.createByUserIdAndRoomId(userId, roomId);
@@ -80,35 +80,37 @@ async function createBooking(userId: number, roomId: number): Promise<BookingId>
 
 async function updateBooking(userId: number, bookingId: number, roomId: number): Promise<BookingId> {
   if(roomId < 1 || bookingId < 1) {
-    throw forbiddenError;
+    throw forbiddenError();
   }
   
   const allowed = await isUserAllowed(userId);
   if(!allowed) {
-    throw forbiddenError;
-  }
-
-  const userBooking = await bookingRepository.findWithRoomByUserId(userId);
-  const isBookingIdFromUser = userBooking && userBooking?.id === bookingId;
-  if(!isBookingIdFromUser) {
-    throw forbiddenError;
+    throw forbiddenError();
   }
 
   const room = await roomRepository.findRoomById(roomId);
   const booking = await bookingRepository.findById(bookingId);
   if(!(room && booking)) {
-    throw notFoundError;
+    throw notFoundError();
+  }
+
+  const userBooking = await bookingRepository.findWithRoomByUserId(userId);
+  const isBookingIdFromUser = userBooking && userBooking?.id === bookingId;
+  if(!isBookingIdFromUser) {
+    throw forbiddenError();
   }
 
   const isRoomTheSame = booking.roomId === roomId;
   if(isRoomTheSame) {
-    forbiddenError;
+    throw forbiddenError();
   }
 
   const full = await isRoomFull(room);
   if(full) {
-    forbiddenError;
+    throw forbiddenError();
   }
+
+  const updatedBooking = await bookingRepository.updateByBookingIdAndRoomId(bookingId, roomId);
 
   return { bookingId };
 }
